@@ -82,7 +82,7 @@ static auto Window_drop(GtkWidget* widget, GdkDragContext* context, signed x, si
 GtkSelectionData* data, unsigned type, unsigned timestamp, pWindow* p) -> void {
   if(!p->state().droppable) return;
   lstring paths = DropPaths(data);
-  if(paths.empty()) return;
+  if(!paths) return;
   p->self().doDrop(paths);
 }
 
@@ -136,7 +136,7 @@ auto pWindow::construct() -> void {
 
   //if program was given a name, try and set the window taskbar icon from one of the pixmaps folders
   if(!Application::state.name);
-  else if(_setIcon({userpath(), ".local/share/icons/"}));
+  else if(_setIcon({Path::user(), ".local/share/icons/"}));
   else if(_setIcon("/usr/local/share/pixmaps/"));
   else if(_setIcon("/usr/share/pixmaps/"));
 
