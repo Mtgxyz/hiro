@@ -7,7 +7,7 @@ struct BrowserDialogWindow {
   auto change() -> void;
   auto isFolder(const string& name) -> bool;
   auto isMatch(const string& name) -> bool;
-  auto run() -> lstring;
+  auto run() -> string_vector;
   auto setPath(string path) -> void;
 
 private:
@@ -26,7 +26,7 @@ private:
         Button cancelButton{&controlLayout, Size{80, 0}, 5};
 
   BrowserDialog::State& state;
-  vector<lstring> filters;
+  vector<string_vector> filters;
 };
 
 //accept button clicked, or enter pressed on file name line edit
@@ -113,14 +113,14 @@ auto BrowserDialogWindow::isMatch(const string& name) -> bool {
   return false;
 }
 
-auto BrowserDialogWindow::run() -> lstring {
+auto BrowserDialogWindow::run() -> string_vector {
   state.response.reset();
 
   layout.setMargin(5);
   pathName.onActivate([&] { setPath(pathName.text()); });
   pathRefresh.setBordered(false).setIcon(Icon::Action::Refresh).onActivate([&] { setPath(state.path); });
   pathHome.setBordered(false).setIcon(Icon::Go::Home).onActivate([&] { setPath(Path::user()); });
-  pathUp.setBordered(false).setIcon(Icon::Go::Up).onActivate([&] { setPath(dirname(state.path)); });
+  pathUp.setBordered(false).setIcon(Icon::Go::Up).onActivate([&] { setPath(Location::dir(state.path)); });
   view.setBatchable(state.action == "openFiles").onActivate([&] { activate(); }).onChange([&] { change(); });
   filterList.setVisible(state.action != "selectFolder").onChange([&] { setPath(state.path); });
   for(auto& filter : state.filters) {
@@ -156,7 +156,7 @@ auto BrowserDialogWindow::run() -> lstring {
 
 auto BrowserDialogWindow::setPath(string path) -> void {
   path.transform("\\", "/");
-  if(!path.endsWith("/")) path.append("/");
+  if((path || Path::root() == "/") && !path.endsWith("/")) path.append("/");
   pathName.setText(state.path = path);
 
   view.reset();
@@ -197,7 +197,7 @@ auto BrowserDialog::openFile() -> string {
   return {};
 }
 
-auto BrowserDialog::openFiles() -> lstring {
+auto BrowserDialog::openFiles() -> string_vector {
   state.action = "openFiles";
   if(!state.title) state.title = "Open Files";
   if(auto result = _run()) return result;
@@ -225,7 +225,7 @@ auto BrowserDialog::selectFolder() -> string {
   return {};
 }
 
-auto BrowserDialog::setFilters(const lstring& filters) -> type& {
+auto BrowserDialog::setFilters(const string_vector& filters) -> type& {
   state.filters = filters;
   return *this;
 }
@@ -245,7 +245,7 @@ auto BrowserDialog::setTitle(const string& title) -> type& {
   return *this;
 }
 
-auto BrowserDialog::_run() -> lstring {
+auto BrowserDialog::_run() -> string_vector {
   if(!state.path) state.path = Path::user();
   return BrowserDialogWindow(state).run();
 }
